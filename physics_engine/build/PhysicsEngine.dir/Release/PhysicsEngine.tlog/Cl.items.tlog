@@ -1,6 +1,0 @@
-C:\Projects\SatelliteSimulator\physics_engine\src\main.cpp;C:\Projects\SatelliteSimulator\physics_engine\build\PhysicsEngine.dir\Release\main.obj
-C:\Projects\SatelliteSimulator\physics_engine\src\orbit_maneuver.cpp;C:\Projects\SatelliteSimulator\physics_engine\build\PhysicsEngine.dir\Release\orbit_maneuver.obj
-C:\Projects\SatelliteSimulator\physics_engine\src\orbit_propagator.cpp;C:\Projects\SatelliteSimulator\physics_engine\build\PhysicsEngine.dir\Release\orbit_propagator.obj
-C:\Projects\SatelliteSimulator\physics_engine\src\orbital_state.cpp;C:\Projects\SatelliteSimulator\physics_engine\build\PhysicsEngine.dir\Release\orbital_state.obj
-C:\Projects\SatelliteSimulator\physics_engine\src\perturbation_force.cpp;C:\Projects\SatelliteSimulator\physics_engine\build\PhysicsEngine.dir\Release\perturbation_force.obj
-C:\Projects\SatelliteSimulator\physics_engine\src\vector_math.cpp;C:\Projects\SatelliteSimulator\physics_engine\build\PhysicsEngine.dir\Release\vector_math.obj

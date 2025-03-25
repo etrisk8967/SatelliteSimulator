@@ -4,6 +4,8 @@ project(PhysicsEngine)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+set(CMAKE_TOOLCHAIN_FILE "/home/netrisk/SatelliteSimulator/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+
 # Find VCPKG-installed packages
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(Boost REQUIRED)

@@ -10,10 +10,32 @@ namespace SatelliteSimulator {
     // Constructor with default values
     OrbitPropagator::OrbitPropagator()
         : currentState_(),
-          stepSize_(10.0),            // Default 10 seconds
+          stepSize_(60.0),            // Default 10 seconds
           absoluteTolerance_(1e-10),  // Default absolute tolerance
           relativeTolerance_(1e-8)    // Default relative tolerance
     {
+    }
+
+    #include <cmath>
+
+    struct GeodeticCoordinates {
+        double latitude;   // radians
+        double longitude;  // radians
+        double altitude;   // meters
+    };
+    
+    // Added to calculate lat/lon/altitude for each position
+    GeodeticCoordinates cartesianToGeodetic(const Vector3& position) {
+        double x = position.x();
+        double y = position.y();
+        double z = position.z();
+        double r = std::sqrt(x * x + y * y + z * z);
+        
+        double latitude = std::asin(z / r);        // Geocentric, close enough
+        double longitude = std::atan2(y, x);       // East-positive, yay
+        double altitude = r - EARTH_RADIUS;        // How high (or low) you are
+        
+        return {latitude, longitude, altitude};
     }
 
     // Set the initial state
@@ -62,29 +84,42 @@ namespace SatelliteSimulator {
     }
 
     // Maneuver management
-    void OrbitPropagator::addManeuver(std::shared_ptr<OrbitManeuver> maneuver) {
-        maneuvers_.push_back(maneuver);
-    }
+    //void OrbitPropagator::addManeuver(std::shared_ptr<OrbitManeuver> maneuver) {
+    //    maneuvers_.push_back(maneuver);
+   // }
 
-    void OrbitPropagator::clearManeuvers() {
-        maneuvers_.clear();
-    }
+   // void OrbitPropagator::clearManeuvers() {
+    //    maneuvers_.clear();
+    //}
 
-    std::vector<std::shared_ptr<OrbitManeuver>> OrbitPropagator::getManeuvers() const {
-        return maneuvers_;
-    }
+    //std::vector<std::shared_ptr<OrbitManeuver>> OrbitPropagator::getManeuvers() const {
+    //    return maneuvers_;
+   //}
 
     // Execute an impulsive maneuver immediately
-    void OrbitPropagator::executeImpulsiveManeuver(const ImpulsiveManeuver& maneuver) {
-        currentState_ = maneuver.apply(currentState_);
-    }
+   //void OrbitPropagator::executeImpulsiveManeuver(const ImpulsiveManeuver& maneuver) {
+    //   currentState_ = maneuver.apply(currentState_);
+   // }
 
     // Calculate acceleration due to gravity (two-body model)
     Vector3 OrbitPropagator::calculateGravitationalAcceleration(const Vector3& position, double mu) {
         double r = position.norm();
-        
-        if (r < 1e-10) {
-            throw std::runtime_error("Position too close to origin, gravitational acceleration undefined");
+
+        spdlog::info("Radius: {:.8f}", r-EARTH_RADIUS);
+        GeodeticCoordinates geo = cartesianToGeodetic(position);
+        double lat_deg = geo.latitude * 180.0 / M_PI;
+        double lon_deg = geo.longitude * 180.0 / M_PI;
+        spdlog::info("Location: Lat: {:.4f}°, Lon: {:.4f}°, Alt: {:.2f} km",
+                       lat_deg, lon_deg, (r - EARTH_RADIUS) / 1000.0);
+
+        if (r < EARTH_RADIUS) {
+            GeodeticCoordinates geo = cartesianToGeodetic(position);
+            double lat_deg = geo.latitude * 180.0 / M_PI;
+            double lon_deg = geo.longitude * 180.0 / M_PI;
+            spdlog::error("Crash at Lat: {:.4f}°, Lon: {:.4f}°, Alt: {:.2f} km",
+                         lat_deg, lon_deg, (r - EARTH_RADIUS) / 1000.0);  
+            
+        //    throw std::runtime_error("Satellite crashed into Earth, Nice Job.");
         }
         
         // a = -μ/r³ * r (Newton's law of gravitation)
@@ -104,11 +139,11 @@ namespace SatelliteSimulator {
         }
         
         // Add acceleration from active maneuvers (finite burns)
-        for (const auto& maneuver : maneuvers_) {
-            if (maneuver->isEnabled() && maneuver->isActive(time)) {
-                totalAcceleration += maneuver->getAcceleration(state, time);
-            }
-        }
+        //for (const auto& maneuver : maneuvers_) {
+          //  if (maneuver->isEnabled() && maneuver->isActive(time)) {
+         //      totalAcceleration += maneuver->getAcceleration(state, time);
+         //  }
+        //}
         
         return totalAcceleration;
     }
@@ -163,32 +198,32 @@ namespace SatelliteSimulator {
     }
 
     // Check for and execute any impulsive maneuvers at the specified time
-    void OrbitPropagator::checkAndExecuteImpulsiveManeuvers(double time) {
-        for (const auto& maneuver : maneuvers_) {
-            // Check if this is an impulsive maneuver and if it's time to execute it
-            auto impulsiveManeuver = std::dynamic_pointer_cast<ImpulsiveManeuver>(maneuver);
-            if (impulsiveManeuver && impulsiveManeuver->isEnabled() && 
-                std::abs(time - impulsiveManeuver->getStartTime()) < 1e-10) {
-                
+    //void OrbitPropagator::checkAndExecuteImpulsiveManeuvers(double time) {
+    //   for (const auto& maneuver : maneuvers_) {
+    //        // Check if this is an impulsive maneuver and if it's time to execute it
+    //        auto impulsiveManeuver = std::dynamic_pointer_cast<ImpulsiveManeuver>(maneuver);
+    //        if (impulsiveManeuver && impulsiveManeuver->isEnabled() && 
+    //            std::abs(time - impulsiveManeuver->getStartTime()) < 1e-10) {
+    //            
                 // Execute the impulsive maneuver
-                currentState_ = impulsiveManeuver->apply(currentState_);
+    //            currentState_ = impulsiveManeuver->apply(currentState_);
                 
                 // Log the maneuver execution
-                spdlog::info("Executed impulsive maneuver at time {:.2f}s: {:.2f} m/s {}",
-                            time, impulsiveManeuver->getDeltaV(), impulsiveManeuver->getName());
-            }
-        }
-    }
+     //           spdlog::info("Executed impulsive maneuver at time {:.2f}s: {:.2f} m/s {}",
+    //                        time, impulsiveManeuver->getDeltaV(), impulsiveManeuver->getName());
+    //        }
+    //    }
+    //}
 
     // Propagate the orbital state to a specific time
-    CartesianState OrbitPropagator::propagateToTime(double finalTime, const StateObserver& observer) {
-        return propagate(0.0, finalTime, observer);
-    }
+   // CartesianState OrbitPropagator::propagateToTime(double finalTime, const StateObserver& observer) {
+   //     return propagate(0.0, finalTime, observer);
+   // }
 
     // Propagate the orbital state by a time interval
-    CartesianState OrbitPropagator::propagateByTime(double deltaTime, const StateObserver& observer) {
-        return propagate(0.0, deltaTime, observer);
-    }
+   // CartesianState OrbitPropagator::propagateByTime(double deltaTime, const StateObserver& observer) {
+    //    return propagate(0.0, deltaTime, observer);
+   // }
 
     // Core propagation implementation
     CartesianState OrbitPropagator::propagate(double startTime, double endTime, const StateObserver& observer) {
@@ -202,65 +237,65 @@ namespace SatelliteSimulator {
         }
         
         // Check if we have any impulsive maneuvers that need to be executed during this propagation
-        std::vector<double> maneuverTimes;
-        for (const auto& maneuver : maneuvers_) {
-            auto impulsiveManeuver = std::dynamic_pointer_cast<ImpulsiveManeuver>(maneuver);
-            if (impulsiveManeuver && impulsiveManeuver->isEnabled()) {
-                double mTime = impulsiveManeuver->getStartTime();
-                if (mTime >= startTime && mTime <= endTime) {
-                    maneuverTimes.push_back(mTime);
-                }
-            }
-        }
+       // std::vector<double> maneuverTimes;
+       // for (const auto& maneuver : maneuvers_) {
+       //     auto impulsiveManeuver = std::dynamic_pointer_cast<ImpulsiveManeuver>(maneuver);
+       //     if (impulsiveManeuver && impulsiveManeuver->isEnabled()) {
+       //         double mTime = impulsiveManeuver->getStartTime();
+       //         if (mTime >= startTime && mTime <= endTime) {
+       //             maneuverTimes.push_back(mTime);
+       //         }
+       //     }
+        //}
         
         // If we have impulsive maneuvers, we need to propagate in segments
-        if (!maneuverTimes.empty()) {
+        //if (!maneuverTimes.empty()) {
             // Sort maneuver times
-            std::sort(maneuverTimes.begin(), maneuverTimes.end());
+        //    std::sort(maneuverTimes.begin(), maneuverTimes.end());
             
             // Start with current time
-            double currentTime = startTime;
+        //    double currentTime = startTime;
             
             // Propagate to each maneuver time, execute the maneuver, and continue
-            for (double maneuverTime : maneuverTimes) {
+        //    for (double maneuverTime : maneuverTimes) {
                 // Propagate to the maneuver time
-                if (maneuverTime > currentTime) {
+         //       if (maneuverTime > currentTime) {
                     // Create an observer that adjusts the time
-                    auto timeAdjustedObserver = observer ? 
-                        [&observer, currentTime](const CartesianState& state, double t) {
-                            observer(state, t + currentTime);
-                        } : StateObserver(nullptr);
+         //           auto timeAdjustedObserver = observer ? 
+        //                [&observer, currentTime](const CartesianState& state, double t) {
+         //                   observer(state, t + currentTime);
+        //                } : StateObserver(nullptr);
                     
                     // Propagate to the maneuver time
-                    propagate(0.0, maneuverTime - currentTime, timeAdjustedObserver);
-                }
+        //            propagate(0.0, maneuverTime - currentTime, timeAdjustedObserver);
+        //        }
                 
                 // Execute any impulsive maneuvers at this time
-                checkAndExecuteImpulsiveManeuvers(maneuverTime);
+         //       checkAndExecuteImpulsiveManeuvers(maneuverTime);
                 
                 // If observer is provided, call it at the maneuver time
-                if (observer) {
-                    observer(currentState_, maneuverTime);
-                }
+        //        if (observer) {
+         //           observer(currentState_, maneuverTime);
+         //       }
                 
                 // Update current time
-                currentTime = maneuverTime;
-            }
+         //       currentTime = maneuverTime;
+        //    }
             
             // Propagate to the end time
-            if (endTime > currentTime) {
+        //    if (endTime > currentTime) {
                 // Create an observer that adjusts the time
-                auto timeAdjustedObserver = observer ? 
-                    [&observer, currentTime](const CartesianState& state, double t) {
-                        observer(state, t + currentTime);
-                    } : StateObserver(nullptr);
+         //       auto timeAdjustedObserver = observer ? 
+         //           [&observer, currentTime](const CartesianState& state, double t) {
+         //               observer(state, t + currentTime);
+         //           } : StateObserver(nullptr);
                 
                 // Propagate to the end time
-                propagate(0.0, endTime - currentTime, timeAdjustedObserver);
-            }
-            
-            return currentState_;
-        }
+         //       propagate(0.0, endTime - currentTime, timeAdjustedObserver);
+        //    }
+        //    
+         //   return currentState_;
+        //}
         
         // If we don't have any impulsive maneuvers, propagate normally
         

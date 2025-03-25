@@ -8,7 +8,7 @@
 #include <boost/numeric/odeint.hpp>
 #include "orbital_state.h"
 #include "perturbation_force.h"
-#include "orbit_maneuver.h"  // Add this include
+//#include "orbit_maneuver.h"  // Add this include
 
 namespace SatelliteSimulator {
 
@@ -40,16 +40,16 @@ namespace SatelliteSimulator {
         std::vector<std::shared_ptr<PerturbationForce>> getPerturbations() const;
         
         // Maneuver management
-        void addManeuver(std::shared_ptr<OrbitManeuver> maneuver);
-        void clearManeuvers();
-        std::vector<std::shared_ptr<OrbitManeuver>> getManeuvers() const;
+       // void addManeuver(std::shared_ptr<OrbitManeuver> maneuver);
+       // void clearManeuvers();
+       // std::vector<std::shared_ptr<OrbitManeuver>> getManeuvers() const;
         
         // Propagation methods
         CartesianState propagateToTime(double finalTime, const StateObserver& observer = nullptr);
         CartesianState propagateByTime(double deltaTime, const StateObserver& observer = nullptr);
-        
+        //CartesianState propagate(double duration, bool& impacted, GeodeticCoordinates& impactLocation);
         // Execute an impulsive maneuver immediately (without propagation)
-        void executeImpulsiveManeuver(const ImpulsiveManeuver& maneuver);
+       // void executeImpulsiveManeuver(const ImpulsiveManeuver& maneuver);
         
         // Calculate acceleration due to gravity (two-body model)
         static Vector3 calculateGravitationalAcceleration(const Vector3& position, double mu = EARTH_MU);
@@ -70,7 +70,7 @@ namespace SatelliteSimulator {
         std::vector<std::shared_ptr<PerturbationForce>> perturbations_;
         
         // Maneuvers
-        std::vector<std::shared_ptr<OrbitManeuver>> maneuvers_;
+       // std::vector<std::shared_ptr<OrbitManeuver>> maneuvers_;
         
         // Convert between CartesianState and state vector for integrator
         static StateVector cartesianToStateVector(const CartesianState& state);
